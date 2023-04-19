@@ -68,14 +68,12 @@ class CamDataset(data.Dataset):
         line = fid.readline()
         cam_list = []
         RT_list = []
-        while(line):
+        while line:
             startid = line.index('[')
             endid = line.index(']')
-            data = line[startid+1:endid]            
+            data = line[startid+1:endid]
             data = data.split(',')
-            cam = []
-            for d in data:
-                cam.append(float(d))
+            cam = [float(d) for d in data]
             K, RT = CamUtils.getBlenderProj(cam[0], cam[1], cam[3], img_w=224, img_h=224)
             RT = np.transpose(RT)
             RT_list.append(RT)

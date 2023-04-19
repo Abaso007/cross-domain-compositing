@@ -164,13 +164,14 @@ def get_norm_matrix(sdf_h5_file):
 
 
 def get_W2O_mat(shift):
-    T_inv = np.asarray(
-        [[1.0, 0., 0., shift[0]],
-         [0., 1.0, 0., shift[1]],
-         [0., 0., 1.0, shift[2]],
-         [0., 0., 0., 1.]]
+    return np.asarray(
+        [
+            [1.0, 0.0, 0.0, shift[0]],
+            [0.0, 1.0, 0.0, shift[1]],
+            [0.0, 0.0, 1.0, shift[2]],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
     )
-    return T_inv
 
 def gen_obj_img_h5():
     #img_dir = "./test_render/image/03001627/17e916fc863540ee3def89b32cef8e45/hard/"
@@ -201,7 +202,7 @@ def gen_obj_img_h5():
             y = int(pc_xy[j, 1])
             x = int(pc_xy[j, 0])
             print(x,y)
-            cv2.circle(img_arr, (x, y), 10, tuple([int(x) for x in colors[j]]), -2)
+            cv2.circle(img_arr, (x, y), 10, tuple(colors[j]), -2)
         cv2.imwrite(out_img_file, img_arr)
 
 def get_img_points(sample_pc, trans_mat_right):

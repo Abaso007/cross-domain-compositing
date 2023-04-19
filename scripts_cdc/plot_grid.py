@@ -12,9 +12,17 @@ def image_grid(imgs, rows, cols):
 def check_experiment(exp_name, path, const_axes=None, ignore=None):
     if not os.path.isdir(os.path.join(path, exp_name)):
         return False
-    if not ((const_axes is None) or (len(const_axes) == 0) or all([name in subdir for name in const_axes])):
+    if (
+        const_axes is not None
+        and len(const_axes) != 0
+        and any(name not in subdir for name in const_axes)
+    ):
         return False
-    return (ignore is None) or (len(ignore) == 0) or all([name not in subdir for name in ignore])
+    return (
+        ignore is None
+        or len(ignore) == 0
+        or all(name not in subdir for name in ignore)
+    )
 
 # ======================================================================================================================
 im_dir = "/disk2/royha/stable-diffusion/outputs/scribbles/more"
@@ -25,7 +33,11 @@ ignore = ['Tin_0.4', 'Tin_0.5', 'Tin_0.7']
 im_i = 0
 # ======================================================================================================================
 
-out_filename = f"summary_{im_i}.jpg" if (const_axes is None) or len(const_axes) == 0 else f"summary_{'_'.join(const_axes)}_{im_i}.jpg"
+out_filename = (
+    f"summary_{im_i}.jpg"
+    if const_axes is None or not const_axes
+    else f"summary_{'_'.join(const_axes)}_{im_i}.jpg"
+)
 out_filename = os.path.join(im_dir, out_filename)
 const_axes += [col_axis, row_axis]
 
@@ -45,7 +57,6 @@ for subdir in os.listdir(im_dir):
 # make grid
 imgs = []
 for x in sorted(im_list.keys()):  # rows
-    for y in sorted(im_list[x].keys()):  # cols
-        imgs.append(im_list[x][y])
+    imgs.extend(im_list[x][y] for y in sorted(im_list[x].keys()))
 grid = image_grid(imgs, len(im_list), len(im_list[list(im_list.keys())[0]]))
 grid.save(out_filename)

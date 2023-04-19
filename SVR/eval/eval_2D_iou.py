@@ -93,12 +93,12 @@ def shift_image(source_mask, alignment):
     """Shift binary mask with respect to input alignment command."""
     num_dim = len(source_mask.shape)
     template = np.zeros_like(source_mask)
-    if num_dim == 2: #mask
+    if num_dim == 2:
         h, w = template.shape[:2]
         template[max(0,alignment[0]): h - abs(min(0, alignment[0])), 
                 max(0,alignment[1]): w - abs(min(0, alignment[1]))] = source_mask[abs(min(0, alignment[0])): h - max(0, alignment[0]),
                 abs(min(0,alignment[1])): w - max(0, alignment[1])]
-    if num_dim == 3: #image
+    elif num_dim == 3:
         h, w, c = template.shape
         for i in range(c):
             template[max(0,alignment[0]): h - abs(min(0, alignment[0])), 
@@ -112,7 +112,7 @@ def determine_2D_IoU(reference_image_folder, source_image_folder, models_to_comp
     reference_masks = os.listdir(reference_image_folder)
     for k in range(len(models_to_compare)):
         folders = models_to_compare[k]
-        files = natsorted(os.listdir(source_image_folder + '/' + folders + '/rendered_view'))
+        files = natsorted(os.listdir(f'{source_image_folder}/{folders}/rendered_view'))
         shift_path = os.path.join(source_image_folder, folders, "rendered_view_mask_shifted")
         os.makedirs(shift_path, exist_ok=True)
         iou_sum = 0
@@ -127,17 +127,17 @@ def determine_2D_IoU(reference_image_folder, source_image_folder, models_to_comp
             # Shift masks with respect to the geometric mean of the reference mask
             source_mask = np.array(Image.open(source_path).resize((224,224)))
             source_mask = shift_image(source_mask, alignment)
-            
+
             # Save the shifted mask
             Image.fromarray(source_mask.astype(np.uint8)).save(os.path.join(source_image_folder, folders, "rendered_view_mask_shifted", file))
-            
+
             # Reshape the masks to vectors
             source_mask = source_mask.reshape(224*224).astype(bool)
             ref_mask = (np.array(Image.open(os.path.join(reference_image_folder, file.split('.')[0]+'.png')).convert('L'))/255).reshape(224*224).astype(bool)
 
             ind_iou = iou(ref_mask, source_mask)
             iou_sum += ind_iou
-        
+
         # Determine average IoU
         iou_sum /= len(files)
         print(f"2D IoU of {folders} is {iou_sum}")

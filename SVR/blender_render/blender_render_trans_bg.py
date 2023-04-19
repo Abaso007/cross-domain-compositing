@@ -57,10 +57,12 @@ bpy.data.worlds['World'].node_tree.nodes["Background"].inputs[0].default_value =
 
 # The model folder name
 model_folder_name = ['inpaint_050']
+pcd_folder = "ply_files"
+# Initialise the material for the mesh, we liked cyan with rough texture
+MAT_NAME = "cyan_color"
 for model_name in model_folder_name:
     # Absolute input folder path of in-the-wild SVR results. NOTE: Depend on where the user saves them
-    input_folder = current_folder + f"/SVR/result/sofa_sample/{model_name}"
-    pcd_folder = "ply_files"
+    input_folder = f"{current_folder}/SVR/result/sofa_sample/{model_name}"
     ply_folder = os.path.join(input_folder, pcd_folder)
     ply_files = os.listdir(ply_folder)
 
@@ -77,11 +79,9 @@ for model_name in model_folder_name:
     for line in lines:
         startid = line.index('[')
         endid = line.index(']')
-        data = line[startid+1:endid]            
+        data = line[startid+1:endid]
         data = data.split(',')
-        cam = []
-        for d in data:
-            cam.append(float(d))
+        cam = [float(d) for d in data]
         params.append(cam)
 
     for ply in ply_files:
@@ -100,7 +100,7 @@ for model_name in model_folder_name:
             if this_obj.type == "MESH":
                 this_obj.select_set(True)
                 bpy.ops.object.delete(use_global=False, confirm=False)
-        
+
         # Load new mesh
         file_loc = os.path.join(ply_folder, ply)
         imported_object = bpy.ops.import_mesh.ply(filepath=file_loc)
@@ -116,8 +116,6 @@ for model_name in model_folder_name:
         for poly in bpy.data.objects[mesh_name].data.polygons:
             poly.use_smooth = True
 
-        # Initialise the material for the mesh, we liked cyan with rough texture
-        MAT_NAME = "cyan_color"
         bpy.data.materials.new(MAT_NAME)
         material = bpy.data.materials[MAT_NAME]
         material.use_nodes = True
@@ -153,7 +151,7 @@ for model_name in model_folder_name:
 
         # Render images and save them to the saving directory
         bpy.context.scene.render.image_settings.color_mode = 'RGBA'
-        bpy.context.scene.render.filepath = save_dir + f'/{filename}.png'
+        bpy.context.scene.render.filepath = f'{save_dir}/{filename}.png'
         bpy.ops.render.render(write_still=True)
 
 

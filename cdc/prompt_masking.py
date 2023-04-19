@@ -103,8 +103,16 @@ def masked_cross_attention(model, prompts, words_in, words_out, mask, tokenizer,
     if exists(mask) and (exists(words_in) or exists(words_out)):
         token_mask = []
         for i, prompt in enumerate(prompts):
-            tokens_in = get_word_inds(prompt, words_in, tokenizer) if exists(words_in) else list()
-            tokens_out = get_word_inds(prompt, words_out, tokenizer) if exists(words_out) else list()
+            tokens_in = (
+                get_word_inds(prompt, words_in, tokenizer)
+                if exists(words_in)
+                else []
+            )
+            tokens_out = (
+                get_word_inds(prompt, words_out, tokenizer)
+                if exists(words_out)
+                else []
+            )
             token_mask.append(cross_attention_masks(mask[i:i+1], tokens_in, tokens_out, w_in, w_out))
         token_mask = torch.concat(token_mask, dim=0)
         register_masked_cross_attention(model, token_mask, stop_masking)

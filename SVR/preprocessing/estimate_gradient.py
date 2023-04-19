@@ -43,26 +43,26 @@ def estimate_gradient(source_filename, target_filename):
 if __name__ == "__main__":
     # This is all ShapeNet categories rendered in DISN dataset
     # catlist = ['03001627', '02691156', '02828884', '02933112', '03211117', '03636649', '03691459', '04090263', '04256520', '04379243', '04530566','02958343', '04401088']
-    
+
     # Alternatively, we can choose to only process the category of interest
     catlist = ['04256520']
 
     data_dir = './SVR/data/'
-    h5_dir = data_dir + 'SDF_v1/'
-    output_dir = data_dir + 'SDF_with_gradient/'
+    h5_dir = f'{data_dir}SDF_v1/'
+    output_dir = f'{data_dir}SDF_with_gradient/'
 
     for cat in catlist:
         model_ids = os.listdir(h5_dir+cat)
         shape_num = len(model_ids)
         for i in range(shape_num):
             mid = model_ids[i]
-            input_filename = h5_dir + cat + '/' + mid + '/ori_sample.h5' 
+            input_filename = h5_dir + cat + '/' + mid + '/ori_sample.h5'
             output_folder = output_dir + cat + '/' + mid + '/'
 
             if (not os.path.exists(output_folder)):
                 os.makedirs(output_folder)
 
-            output_filename = output_folder + 'data.h5'
+            output_filename = f'{output_folder}data.h5'
             estimate_gradient(input_filename, output_filename)
             print('processing: %d/%d, %s done.' % (i, shape_num, mid))
             

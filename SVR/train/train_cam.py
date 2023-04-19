@@ -13,10 +13,14 @@ def test(config):
     if(config.cuda):
         model.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.cam_lr, betas=(config.beta1, 0.999), weight_decay=1e-5)
-    
+
     testset = CamDataset(config, 'test')
     test_iter = torch.utils.data.DataLoader(testset, batch_size=config.cam_batch_size, shuffle=False)
-    epoch, model, optimizer = utils.load_checkpoint(config.model_dir+'/'+config.model_folder_name+config.cam_model_name,model, optimizer)
+    epoch, model, optimizer = utils.load_checkpoint(
+        f'{config.model_dir}/{config.model_folder_name}{config.cam_model_name}',
+        model,
+        optimizer,
+    )
     output_dir = config.output_dir+str(epoch)+'_epoch/'
     if(not os.path.exists(output_dir)):
         os.makedirs(output_dir)
@@ -31,28 +35,32 @@ def test(config):
 def train(config):
     if(config.cuda):
         torch.cuda.set_device(config.gpu)
-    
+
     model = Net(config)
     mseloss = nn.MSELoss()
     if(config.cuda):
         model.cuda()
         mseloss.cuda()
-    
+
     trainset = CamDataset(config, 'train')
     train_iter = torch.utils.data.DataLoader(trainset, batch_size=config.cam_batch_size, shuffle=True, drop_last = True)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config.cam_lr, betas=(config.beta1, 0.999))
     epoch = 0
 
-    if(config.load_pretrain and os.path.exists(config.model_dir+'/'+config.model_folder_name + config.cam_model_name)):
-        epoch, model, optimizer, best_test_loss = utils.load_checkpoint(config.model_dir+'/' + config.model_folder_name + config.cam_model_name,model, optimizer)
+    if config.load_pretrain and os.path.exists(
+        f'{config.model_dir}/{config.model_folder_name}{config.cam_model_name}'
+    ):
+        epoch, model, optimizer, best_test_loss = utils.load_checkpoint(
+            f'{config.model_dir}/{config.model_folder_name}{config.cam_model_name}',
+            model,
+            optimizer,
+        )
     else:
-        f = open(config.log, 'w')
-        f.write('')
-        f.close()
-
+        with open(config.log, 'w') as f:
+            f.write('')
     # train
-    while(epoch<config.epochs):
+    while (epoch<config.epochs):
         model.train()
         for batch_idx, batch in enumerate(train_iter):
             [images, cams, sampling] = batch
@@ -71,14 +79,26 @@ def train(config):
             print(logline)
             utils.print_log(config.log, logline)
 
-        utils.save_checkpoint(epoch, model, optimizer, loss.item(), config.model_dir+'/'+config.model_folder_name+config.cam_model_name)
-        if((epoch+1)%config.save_every_epoch==0):
-            utils.save_checkpoint(epoch, model, optimizer, loss.item(), config.model_dir+'/model'+str(epoch+1)+'.pt.tar')
-        
+        utils.save_checkpoint(
+            epoch,
+            model,
+            optimizer,
+            loss.item(),
+            f'{config.model_dir}/{config.model_folder_name}{config.cam_model_name}',
+        )
+        if ((epoch+1)%config.save_every_epoch==0):
+            utils.save_checkpoint(
+                epoch,
+                model,
+                optimizer,
+                loss.item(),
+                f'{config.model_dir}/model{str(epoch + 1)}.pt.tar',
+            )
+
         epoch += 1
     
 if __name__ == "__main__":
     config = utils.get_args()
     config.load_pretrain = True
-    os.makedirs(config.model_dir+'/' + config.model_folder_name, exist_ok=True)
+    os.makedirs(f'{config.model_dir}/{config.model_folder_name}', exist_ok=True)
     train(config)

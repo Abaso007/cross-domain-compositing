@@ -54,21 +54,19 @@ class CamNet(nn.Module):
     def compute_rotation_matrix_from_ortho6d(self, pred_rotation):
         x_raw = pred_rotation[:,0:3]
         y_raw = pred_rotation[:,3:6]
-        x = self.normalize_vector(x_raw) 
-        z = torch.cross(x,y_raw,dim=1) 
+        x = self.normalize_vector(x_raw)
+        z = torch.cross(x,y_raw,dim=1)
         z = self.normalize_vector(z)
-        y = torch.cross(z,x,dim=1) 
+        y = torch.cross(z,x,dim=1)
         x = x.unsqueeze(2)
         y = y.unsqueeze(2)
         z = z.unsqueeze(2)
-        output = torch.cat([x,y,z], dim=2) # output: [B,3,3]
-        return output
+        return torch.cat([x,y,z], dim=2)
 
     def transform_points(self, points, transmat):
         plus = torch.ones((points.size(0),points.size(1),1)).cuda()
         homopoints = torch.cat([points,plus], dim=2)
-        transformed = torch.matmul(homopoints, transmat)
-        return transformed
+        return torch.matmul(homopoints, transmat)
     
     def forward(self, image, gt_transmat, samplings):
         globalfeat = self.vgg(image)
@@ -116,20 +114,18 @@ class CamNet(nn.Module):
         m2 = self.bn3(self.m2_fc1(globalfeat))
         m2 = self.bn4(self.m2_fc2(m2))
         pred_rotation = self.m2_fc3(m2)
-        
+
         # compute the transformation matrix
         cam_location_inv = torch.cat([pred_translation * self.CAM_MAX_DIST, self.zerovec.unsqueeze(0).repeat(pred_translation.size(0),1)], dim=1)
         R_obj2cam_inv = self.CAM_ROT.unsqueeze(0).repeat(pred_translation.size(0),1,1)
         R_camfix_inv = self.R_camfix.unsqueeze(0).repeat(pred_translation.size(0),1,1)
-        
+
         cam_location_inv = cam_location_inv.unsqueeze(1)
         pred_translation_inv = cam_location_inv.matmul(R_obj2cam_inv)
         pred_translation_inv = pred_translation_inv.matmul(R_camfix_inv)
         pred_translation_inv = pred_translation_inv * (-1.0)
-        
+
         pred_rotation_mat_inv = self.compute_rotation_matrix_from_ortho6d(pred_rotation)
-        pred_transmat = torch.cat([pred_rotation_mat_inv, pred_translation_inv], dim=1)
-        
-        return pred_transmat
+        return torch.cat([pred_rotation_mat_inv, pred_translation_inv], dim=1)
 
     

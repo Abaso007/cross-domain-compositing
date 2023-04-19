@@ -17,7 +17,7 @@ def process_image(image_file, save_path):
     # Save new image and mask with sorted name
     new_image = Image.fromarray(np.array(resized_image)[:,:,:3])
     image_save_path = os.path.join(save_path, image_file.split('/')[-1])
-    mask_save_path = os.path.join(save_path, f"image_mask.png")
+    mask_save_path = os.path.join(save_path, "image_mask.png")
     new_image.save(image_save_path)
     mask.save(mask_save_path)
     return image_save_path, mask_save_path
@@ -37,7 +37,7 @@ def main():
 
     # NOTE: Tout is controlling the object's condition strength. 1 for pure preservation.
     cdc_config.sampling.T_out = SVR_config.augmentation_strength
-    
+
     # Other parameters that are mostly remain unchanged
     cdc_config.sampling.strength = 1.0
     cdc_config.sampling.ddim_steps = 50
@@ -50,10 +50,10 @@ def main():
     cdc_config.sampling.skip_grid = True
 
     SVR_config = SVR_utils.get_args()
- 
+
     # Path to save augmented data
     save_folder_identifier = str(int(cdc_config.sampling.T_out * 100)).zfill(3)
-    save_path = "./SVR/data/image_augmented_inpaint_" + save_folder_identifier
+    save_path = f"./SVR/data/image_augmented_inpaint_{save_folder_identifier}"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
 
@@ -65,7 +65,7 @@ def main():
 
     # Category id of the target ShapeNet object
     cat_id = SVR_config.catlist
-    
+
     # Camera view points to be augmented
     cam_views_num = SVR_config.augmented_cam_views
     cam_view = [str(x).zfill(2) for x in cam_views_num]
@@ -83,14 +83,14 @@ def main():
 
             # Specify saving directory w.r.t. model id
             cdc_config.sampling.outdir = os.path.join(save_path, cat, instance)
-        
+
             if not os.path.exists(cdc_config.sampling.outdir):
                 os.makedirs(cdc_config.sampling.outdir,exist_ok=True)
-            
+
             # Augment each camera view
             for cam in cam_view:
-                file_name = os.path.join(instance_path, cam+".png")
-                result_name = os.path.join(cdc_config.sampling.outdir, cam+'.png')
+                file_name = os.path.join(instance_path, f"{cam}.png")
+                result_name = os.path.join(cdc_config.sampling.outdir, f'{cam}.png')
                 # If an augmentation is already made for this camera view, skip this loop.
                 if not os.path.isfile(result_name):                  
                     # Process the input images and temporarily save them in the tmp save folder.

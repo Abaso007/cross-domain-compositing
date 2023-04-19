@@ -10,9 +10,13 @@ def image_grid(imgs, rows, cols):
     return grid
 
 def check_experiment(exp_name, path, const_axes):
-    if not os.path.isdir(os.path.join(path, exp_name)):
-        return False
-    return (const_axes is None) or (len(const_axes) == 0) or all([name in subdir for name in const_axes])
+    return (
+        const_axes is None
+        or len(const_axes) == 0
+        or all(name in subdir for name in const_axes)
+        if os.path.isdir(os.path.join(path, exp_name))
+        else False
+    )
 
 # ======================================================================================================================
 import numpy as np
@@ -23,7 +27,11 @@ size = 512
 images = np.arange(8)
 # ======================================================================================================================
 
-out_filename = f"summary.jpg" if (const_axes is None) or len(const_axes) == 0 else f"summary_{'_'.join(const_axes)}.jpg"
+out_filename = (
+    "summary.jpg"
+    if const_axes is None or not const_axes
+    else f"summary_{'_'.join(const_axes)}.jpg"
+)
 out_filename = os.path.join(im_dir, out_filename)
 
 # load images
@@ -39,8 +47,7 @@ for subdir in os.listdir(im_dir):
 # make grid
 imgs = []
 for i in images:
-    for key in reversed(sorted(im_list.keys())):
-        imgs.append(im_list[key][i])
+    imgs.extend(im_list[key][i] for key in reversed(sorted(im_list.keys())))
 grid = image_grid(imgs, 1, 8)
 grid.save(out_filename)
 

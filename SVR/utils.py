@@ -71,10 +71,9 @@ def get_args():
     return args
 
 def print_log(log_fname, logline):
-    f = open(log_fname,'a')
-    f.write(logline)
-    f.write('\n')
-    f.close()
+    with open(log_fname,'a') as f:
+        f.write(logline)
+        f.write('\n')
 
 def save_checkpoint(epoch, model, optimizer, bestloss, output_filename):
     state = {'epoch': epoch + 1,
@@ -121,9 +120,9 @@ def render_grid_occupancy(fname, gridvalues, threshold=0):
     img3 = np.clip((np.amax(signmat, axis=2)-np.amin(signmat, axis=2))*256, 0,255).astype(np.uint8)
 
     fname_without_suffix = fname[:-4]
-    cv2.imwrite(fname_without_suffix+'_1.png',img1)
-    cv2.imwrite(fname_without_suffix+'_2.png',img2)
-    cv2.imwrite(fname_without_suffix+'_3.png',img3)
+    cv2.imwrite(f'{fname_without_suffix}_1.png', img1)
+    cv2.imwrite(f'{fname_without_suffix}_2.png', img2)
+    cv2.imwrite(f'{fname_without_suffix}_3.png', img3)
 
 """ marching cube """
 def render_implicits(fname, gridvalues, threshold=0):
@@ -134,27 +133,37 @@ def render_implicits(fname, gridvalues, threshold=0):
     write_ply(fname, vertices, triangles)
 
 def write_obj(fname, vertices, triangles):
-    fout = open(fname, 'w')
-    for ii in range(len(vertices)):
-        fout.write("v "+str(vertices[ii,0])+" "+str(vertices[ii,1])+" "+str(vertices[ii,2])+"\n")
-    for ii in range(len(triangles)):
-        fout.write("f "+str(int(triangles[ii,0])+1)+" "+str(int(triangles[ii,1])+1)+" "+str(int(triangles[ii,2])+1)+"\n")
-    fout.close()
+    with open(fname, 'w') as fout:
+        for ii in range(len(vertices)):
+            fout.write(
+                f"v {str(vertices[ii, 0])} {str(vertices[ii, 1])} {str(vertices[ii, 2])}"
+                + "\n"
+            )
+        for ii in range(len(triangles)):
+            fout.write(
+                f"f {str(int(triangles[ii, 0]) + 1)} {str(int(triangles[ii, 1]) + 1)} {str(int(triangles[ii, 2]) + 1)}"
+                + "\n"
+            )
 
 def write_ply(fname, vertices, triangles):
-	fout = open(fname, 'w')
-	fout.write("ply\n")
-	fout.write("format ascii 1.0\n")
-	fout.write("element vertex "+str(len(vertices))+"\n")
-	fout.write("property float x\n")
-	fout.write("property float y\n")
-	fout.write("property float z\n")
-	fout.write("element face "+str(len(triangles))+"\n")
-	fout.write("property list uchar int vertex_index\n")
-	fout.write("end_header\n")
-	for ii in range(len(vertices)):
-		fout.write(str(vertices[ii,0])+" "+str(vertices[ii,1])+" "+str(vertices[ii,2])+"\n")
-	for ii in range(len(triangles)):
-		fout.write("3 "+str(triangles[ii,0])+" "+str(triangles[ii,1])+" "+str(triangles[ii,2])+"\n")
-	fout.close()
+    with open(fname, 'w') as fout:
+        fout.write("ply\n")
+        fout.write("format ascii 1.0\n")
+        fout.write(f"element vertex {len(vertices)}" + "\n")
+        fout.write("property float x\n")
+        fout.write("property float y\n")
+        fout.write("property float z\n")
+        fout.write(f"element face {len(triangles)}" + "\n")
+        fout.write("property list uchar int vertex_index\n")
+        fout.write("end_header\n")
+        for ii in range(len(vertices)):
+            fout.write(
+                f"{str(vertices[ii, 0])} {str(vertices[ii, 1])} {str(vertices[ii, 2])}"
+                + "\n"
+            )
+        for ii in range(len(triangles)):
+            fout.write(
+                f"3 {str(triangles[ii, 0])} {str(triangles[ii, 1])} {str(triangles[ii, 2])}"
+                + "\n"
+            )
 

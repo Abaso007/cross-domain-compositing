@@ -71,5 +71,9 @@ for subdir in os.listdir(in_path):
             c = np.random.randint(0, 512 - image_obj.shape[1] + 1)
             image[r:r + image_obj.shape[0], c:c + image_obj.shape[1], :] = image_obj
             mask[r:r + mask_obj.shape[0], c:c + mask_obj.shape[1], :] = mask_obj[:, :, np.newaxis] * 255
-            Image.fromarray(image).save(os.path.join(images_out_path, prefix + "-" + filename))
-            Image.fromarray(mask).save(os.path.join(masks_out_path, prefix + "-" + filename))
+            Image.fromarray(image).save(
+                os.path.join(images_out_path, f"{prefix}-{filename}")
+            )
+            Image.fromarray(mask).save(
+                os.path.join(masks_out_path, f"{prefix}-{filename}")
+            )

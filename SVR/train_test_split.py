@@ -1,4 +1,5 @@
 """Split partially augmented sofa object into training instances and testing instances."""
+
 import os
 from sklearn.model_selection import train_test_split
 
@@ -12,8 +13,8 @@ train, test = train_test_split(all_instances)
 # Save the train test split results in the desingated folder
 save_path = "./SVR/data/train_test_split"
 os.makedirs(save_path,exist_ok=True)
-training_lst = os.path.join(save_path, cat_id+'_train.lst')
-test_lst = os.path.join(save_path, cat_id+"_test.lst")
+training_lst = os.path.join(save_path, f'{cat_id}_train.lst')
+test_lst = os.path.join(save_path, f"{cat_id}_test.lst")
 with open(training_lst, 'w') as filehandle:
     for instance_id in train:
         filehandle.writelines(instance_id + "\n")

@@ -56,18 +56,18 @@ def get_K(img_w = 224, img_h = 224):
     f_v = F_MM * img_h * scale * PIXEL_ASPECT_RATIO / SENSOR_SIZE_MM
     u_0 = img_w * scale / 2
     v_0 = img_h * scale / 2
-    K = np.matrix(((f_u, SKEW, u_0), (0, f_v, v_0), (0, 0, 1)))
-
-    return K
+    return np.matrix(((f_u, SKEW, u_0), (0, f_v, v_0), (0, 0, 1)))
 
 def load_pointcloud(in_file):
     plydata = PlyData.read(in_file)
-    vertices = np.stack([
-        plydata['vertex']['x'],
-        plydata['vertex']['y'],
-        plydata['vertex']['z']
-    ], axis=1)
-    return vertices
+    return np.stack(
+        [
+            plydata['vertex']['x'],
+            plydata['vertex']['y'],
+            plydata['vertex']['z'],
+        ],
+        axis=1,
+    )
 
 def load_camera_model(model_path):
     config = utils.get_args()

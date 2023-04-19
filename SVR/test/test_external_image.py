@@ -14,8 +14,8 @@ def test_external_sdf(config, image_folder, save_path):
     CAMmodel = CamNet(config)
     SDFmodel.cuda()
     CAMmodel.cuda()
-    CAM_pretrain_fn = config.model_dir+f'/{config.model_folder_name}/{config.cam_model_name}'
-    SDF_pretrain_fn = config.model_dir+f'/{config.model_folder_name}/{config.sdf_model_name}'
+    CAM_pretrain_fn = f'{config.model_dir}/{config.model_folder_name}/{config.cam_model_name}'
+    SDF_pretrain_fn = f'{config.model_dir}/{config.model_folder_name}/{config.sdf_model_name}'
     _, CAMmodel, _, _ = utils.load_checkpoint(CAM_pretrain_fn, CAMmodel, None)
     epoch, SDFmodel, _, _ = utils.load_checkpoint(SDF_pretrain_fn, SDFmodel, None)
     CAMmodel.eval()
@@ -26,7 +26,7 @@ def test_external_sdf(config, image_folder, save_path):
         if(config.cuda):
             gridworldcoords = gridworldcoords.cuda()
 
-        
+
         all_image = os.listdir(image_folder)
         dataset = Dataset(config, 'test')
         for image in all_image:
@@ -40,7 +40,7 @@ def test_external_sdf(config, image_folder, save_path):
             rgb_image = rgb_image.permute(2,0,1)
             rgb_image = rgb_image.cuda()
             rgb_image = rgb_image.unsqueeze(0)
-            
+
             # predict the camera
             pred_RT = CAMmodel.test(rgb_image)
             pred_RT = pred_RT[0]
@@ -50,7 +50,7 @@ def test_external_sdf(config, image_folder, save_path):
             pred_transmat = torch.tensor(pred_transmat).float()
             pred_transmat = pred_transmat.cuda()
             pred_transmat = pred_transmat.unsqueeze(0)
-                
+
             # test
             test_pointnum = config.test_pointnum
             times = math.ceil(gridworldcoords.size(1)/test_pointnum)
@@ -70,7 +70,7 @@ def test_external_sdf(config, image_folder, save_path):
             # extract the iso-surface
             if(not os.path.exists(save_path)):
                 os.makedirs(save_path)
-            ply_fname = os.path.join(save_path, image_name + '.ply')
+            ply_fname = os.path.join(save_path, f'{image_name}.ply')
             utils.render_implicits(ply_fname, pred_values)
 
 def main():

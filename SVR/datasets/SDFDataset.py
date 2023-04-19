@@ -20,7 +20,7 @@ class SDFDataset(data.Dataset):
         self.datasize = 0
 
         # only load the training set or test set
-        if(not (status=='test' or status=='train')):
+        if status not in ['test', 'train']:
             return
 
         # read the dataset
@@ -51,7 +51,7 @@ class SDFDataset(data.Dataset):
             data['camparams'] = cam_list
             data['transmats'] = transmat_list
             datalist[i] = data
-        
+
         self.datalist = datalist
         self.datasize = len(self.datalist)
         print('Finished loading the %s dataset: %d data.'%(status, self.datasize))
@@ -132,43 +132,38 @@ class SDFDataset(data.Dataset):
             return None, None, None
 
     def sampling(self, values, densities, MODE='weighted'):
-        if(MODE=='random'):
-            sampled_pids = np.random.randint(values.shape[0], size=self.num_points)
-            return sampled_pids
-        elif(MODE=='weighted'):
+        if (MODE=='random'):
+            return np.random.randint(values.shape[0], size=self.num_points)
+        elif (MODE=='weighted'):
             half_sampling_num = int(self.num_points/2)
             pos_inds = np.argwhere(values>0)
             neg_inds = np.argwhere(values<0)
-            if(len(pos_inds)<=self.num_points/5 or len(neg_inds)<=self.num_points/5):
-                # if there is too few points in one side...
-                # just random sampling here
-                sampled_pids = np.random.randint(values.shape[0], size=self.num_points)
-                return sampled_pids
+            if (len(pos_inds)<=self.num_points/5 or len(neg_inds)<=self.num_points/5):
+                return np.random.randint(values.shape[0], size=self.num_points)
+            pos_probs = densities[pos_inds]/np.sum(densities[pos_inds])
+            pos_probs = np.squeeze(pos_probs, axis=1)
+            pos_probs = np.squeeze(pos_probs, axis=1)
+            neg_probs = densities[neg_inds]/np.sum(densities[neg_inds])
+            neg_probs = np.squeeze(neg_probs, axis=1)
+            neg_probs = np.squeeze(neg_probs, axis=1)
+
+            if (pos_inds.shape[0]>half_sampling_num):
+                sampled_pos_inds = np.random.choice(pos_inds.shape[0], size=half_sampling_num, replace=False, p=pos_probs)
             else:
-                pos_probs = densities[pos_inds]/np.sum(densities[pos_inds])
-                pos_probs = np.squeeze(pos_probs, axis=1)
-                pos_probs = np.squeeze(pos_probs, axis=1)
-                neg_probs = densities[neg_inds]/np.sum(densities[neg_inds])
-                neg_probs = np.squeeze(neg_probs, axis=1)
-                neg_probs = np.squeeze(neg_probs, axis=1)
+                sampled_pos_inds = np.random.choice(pos_inds.shape[0], size=half_sampling_num-pos_inds.shape[0], replace=False, p=pos_probs)
+                another = np.array(list(range(pos_inds.shape[0])))
+                sampled_pos_inds = np.concatenate((sampled_pos_inds, another), axis=0)
+            sampled_pos_inds = pos_inds[sampled_pos_inds]
+            if (neg_inds.shape[0]>half_sampling_num):
+                sampled_neg_inds = np.random.choice(neg_inds.shape[0], size=half_sampling_num, replace=False, p=neg_probs)
+            else:
+                sampled_neg_inds = np.random.choice(neg_inds.shape[0], size=half_sampling_num-neg_inds.shape[0], p=neg_probs)
+                another = np.array(list(range(neg_inds.shape[0])))
+                sampled_neg_inds = np.concatenate((sampled_neg_inds, another), axis=0)
+            sampled_neg_inds = neg_inds[sampled_neg_inds]
 
-                if(pos_inds.shape[0]>half_sampling_num):
-                    sampled_pos_inds = np.random.choice(pos_inds.shape[0], size=half_sampling_num, replace=False, p=pos_probs)
-                else:
-                    sampled_pos_inds = np.random.choice(pos_inds.shape[0], size=half_sampling_num-pos_inds.shape[0], replace=False, p=pos_probs)
-                    another = np.array([i for i in range(pos_inds.shape[0])])
-                    sampled_pos_inds = np.concatenate((sampled_pos_inds, another), axis=0)
-                sampled_pos_inds = pos_inds[sampled_pos_inds]
-                if(neg_inds.shape[0]>half_sampling_num):
-                    sampled_neg_inds = np.random.choice(neg_inds.shape[0], size=half_sampling_num, replace=False, p=neg_probs)
-                else:
-                    sampled_neg_inds = np.random.choice(neg_inds.shape[0], size=half_sampling_num-neg_inds.shape[0], p=neg_probs)
-                    another = np.array([i for i in range(neg_inds.shape[0])])
-                    sampled_neg_inds = np.concatenate((sampled_neg_inds, another), axis=0)
-                sampled_neg_inds = neg_inds[sampled_neg_inds]
-
-                sampled_pids = np.concatenate((sampled_pos_inds, sampled_neg_inds), axis=0)
-                sampled_pids = np.squeeze(sampled_pids, axis=1)
+            sampled_pids = np.concatenate((sampled_pos_inds, sampled_neg_inds), axis=0)
+            sampled_pids = np.squeeze(sampled_pids, axis=1)
         else:
             # if it's not uniform sampling or weighted sampling
             print("Sampling mode error!!")
@@ -180,21 +175,19 @@ class SDFDataset(data.Dataset):
         transmat_list = []
 
         fid = open(rendering_metadata_filename, 'r')
-        line = fid.readline()
-        while(line):
+        while line := fid.readline():
             # read parameters from the file
             startid = line.index('[')
             endid = line.index(']')
-            data = line[startid+1:endid]            
+            data = line[startid+1:endid]
             data = data.split(',')
             cam = [float(d) for d in data]
             # compute the transformation matrix
             K, RT = CamUtils.getBlenderProj(cam[0], cam[1], cam[3], img_w=224, img_h=224)
-            trans_mat = np.linalg.multi_dot([K, RT, rot_mat])        
+            trans_mat = np.linalg.multi_dot([K, RT, rot_mat])
             trans_mat_right = np.transpose(trans_mat)
             cam_list.append(cam)
             transmat_list.append(trans_mat_right)
-            line = fid.readline()
         # return all the cameras in the file
         return cam_list, transmat_list
 
@@ -237,6 +230,5 @@ class SDFDataset(data.Dataset):
         v_0 = img_h * scale / 2
         K = np.matrix(((f_u, SKEW, u_0), (0, f_v, v_0), (0, 0, 1)))
 
-        trans_mat = np.linalg.multi_dot([K, RT, rot_mat])        
-        trans_mat_right = np.transpose(trans_mat)
-        return trans_mat_right
+        trans_mat = np.linalg.multi_dot([K, RT, rot_mat])
+        return np.transpose(trans_mat)

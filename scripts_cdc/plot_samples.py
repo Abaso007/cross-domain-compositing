@@ -70,8 +70,8 @@ def image_grid(imgs, rows, cols):
 # ======================================================================================================================
 im_dir = "/disk2/royha/stable-diffusion/outputs/CG2Real/outpainting/sofa_all_seed_t0.6"
 in_dir = '/disk2/royha/editing-data/scribbles/images'
-out_filename = f"summary_compare.png"
-out_filename_input = f"input_partial.png"
+out_filename = "summary_compare.png"
+out_filename_input = "input_partial.png"
 seeds = ['downNout_1_Tout_0.4_repaintstart_0.8',
          'downNout_1_Tout_0.2_repaintstart_0.0',
          'downNout_2_Tout_0.2_repaintstart_0.8',
@@ -96,8 +96,7 @@ for seed in seeds:
 
 imgs = []
 for x in sorted(im_list['downNout_1_Tout_0.4_repaintstart_0.8'].keys()):  # rows
-    for y in sorted(im_list.keys()):  # cols
-        imgs.append(im_list[y][x])
+    imgs.extend(im_list[y][x] for y in sorted(im_list.keys()))
 grid = image_grid(imgs, len(im_list[list(im_list.keys())[0]]), len(im_list))
 grid.save(os.path.join(im_dir, out_filename))
 

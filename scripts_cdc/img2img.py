@@ -30,7 +30,7 @@ def load_data(img_path, mask_path, prompt_path, max_imgs, default_prompt, batch_
 
     if not prompt_path:
         prompt = default_prompt
-        assert default_prompt is not None
+        assert prompt is not None
         prompt = [prompt] * n_imgs
     else:
         print(f"reading prompts from {prompt_path}")
@@ -95,7 +95,9 @@ def main():
         f.write(" ".join(f"\"{i}\"" if " " in i else i for i in sys.argv))
     OmegaConf.save(config, os.path.join(outpath, 'config.yaml'))
 
-    print('Sweeping through: {}'.format({key: [val[1] for val in sweep[key]] for key in sweep}))
+    print(
+        f'Sweeping through: {{key: [val[1] for val in sweep[key]] for key in sweep}}'
+    )
     if sampling_conf.sweep_tuples:
         runs = zip(*sweep.values())
         n_exp = len(next(iter(sweep.values())))
@@ -133,7 +135,7 @@ def main():
         with torch.no_grad():
             with precision_scope("cuda"):
                 with model.ema_scope():
-                    all_samples = list()
+                    all_samples = []
                     for img, mask, prompts, filename in tqdm(data_loader, desc="Data"):
                         if (sampling_conf.seed is not None) and (sampling_conf.seed >= 0):
                             seed_everything(sampling_conf.seed)

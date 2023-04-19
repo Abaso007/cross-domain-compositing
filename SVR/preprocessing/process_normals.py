@@ -28,13 +28,13 @@ def unit_normal_map(normal_map):
 if __name__ == "__main__":
     # This is all ShapeNet categories rendered in DISN dataset
     # catlist = ['03001627', '02691156', '02828884', '02933112', '03211117', '03636649', '03691459', '04090263', '04256520', '04379243', '04530566','02958343', '04401088']
-    
+
     # Alternatively, we can choose to only process the category of interest
     catlist = ['04256520']
 
     data_dir = './SVR/data/'
-    normal_dir = data_dir + 'normal/'
-    output_dir = data_dir + 'normal_processed/'
+    normal_dir = f'{data_dir}normal/'
+    output_dir = f'{data_dir}normal_processed/'
 
     for cat in catlist:
         model_ids = os.listdir(normal_dir+cat)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
             if(not os.path.exists(output_folder)):
                 os.makedirs(output_folder)
-               
+
             for viewid in range(36):
                 normalfn = input_folder + str(viewid).zfill(2) + '.png'
                 output_normalfn = output_folder + str(viewid).zfill(2) + '_mnormal.png'
@@ -55,6 +55,6 @@ if __name__ == "__main__":
                 linear_normal = sRGB_to_linear(srgb/255.0)-0.5
                 unit_normal = unit_normal_map(linear_normal)
                 gt_nmap = unit_normal*0.5+ 0.5
-        
+
                 cv2.imwrite(output_normalfn, gt_nmap*255.0)
             print('processing: %d/%d, %s done.' % (i, shape_num, mid))

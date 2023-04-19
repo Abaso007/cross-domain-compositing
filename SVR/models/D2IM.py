@@ -101,8 +101,7 @@ class D2IM_Net(nn.Module):
             pixels_per_shape = pixels[i,:,1] * featmap_res + pixels[i,:,0]
             point_feats_per_shape = torch.index_select(featmap[i,:,:], 0, pixels_per_shape)
             pointfeats.append(point_feats_per_shape.unsqueeze(0))
-        pointfeats = torch.cat(pointfeats, dim=0)
-        return pointfeats
+        return torch.cat(pointfeats, dim=0)
 
     def forward(self, points, values, gradients, mc_image, transmat, scale):
         # for checking the projection
@@ -201,19 +200,21 @@ class D2IM_Net(nn.Module):
         vecs = self.project_vector_to_worldview(vecs, transmat)
         vecs = nn.functional.normalize(vecs, p=2, dim=2)*0.03
         vecs = vecs.repeat(points.size(0),points.size(1),1)
-        
+
         # estimate the frontness
         delta_points = points + vecs
         delta_uv, _, _ = self.project_points_to_pixels(delta_points, transmat)
         if(self.exp_name == 'd2im'):
             delta_base_values = self.im_decoder(featvecs, delta_points)
-            
+
         front_weights = 0.5-0.5*torch.sign(delta_base_values - base_values)
 
         pred_disp_front = pred_disp[:,0,:,:].unsqueeze(1)
         pred_disp_back = pred_disp[:,1,:,:].unsqueeze(1)
         pred_point_disp_front = self.project_featmap_by_uv(uv, [pred_disp_front])
         pred_point_disp_back = self.project_featmap_by_uv(uv, [pred_disp_back])
-        final_values = base_values + pred_point_disp_front*front_weights + pred_point_disp_back*(1-front_weights)
-        
-        return final_values
+        return (
+            base_values
+            + pred_point_disp_front * front_weights
+            + pred_point_disp_back * (1 - front_weights)
+        )

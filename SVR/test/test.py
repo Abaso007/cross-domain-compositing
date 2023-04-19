@@ -13,11 +13,11 @@ from SVR.datasets.SDFDataset import SDFDataset as Dataset
 def test_one_without_gttransmat(CAMmodel, SDFmodel, dataset, gridworldcoords, cat_id, shape_id, cam_id, output_dir, config):
     rgba_image, _, _ = dataset.get_testdata(cat_id, shape_id, cam_id)
     if((rgba_image is None)):
-        return 
+        return
     if(config.cuda):
         rgba_image = rgba_image.cuda()
     rgba_image = rgba_image.unsqueeze(0)
-    
+
     # predict the camera
     pred_RT = CAMmodel.test(rgba_image)
     pred_RT = pred_RT[0]
@@ -27,7 +27,7 @@ def test_one_without_gttransmat(CAMmodel, SDFmodel, dataset, gridworldcoords, ca
     pred_transmat = torch.tensor(pred_transmat).float()
     pred_transmat = pred_transmat.cuda()
     pred_transmat = pred_transmat.unsqueeze(0)
-    
+
     # test
     test_pointnum = config.test_pointnum
     times = math.ceil(gridworldcoords.size(1)/test_pointnum)
@@ -38,16 +38,16 @@ def test_one_without_gttransmat(CAMmodel, SDFmodel, dataset, gridworldcoords, ca
         pred_gtvalues= SDFmodel.inference_sdf_with_detail(points_batch, rgba_image, pred_transmat)
         pred_value_list.append(pred_gtvalues)
     pred_values = torch.cat(pred_value_list, dim=1)
-    
+
     # reshape the implicit field
     pred_values = pred_values.view(config.mcube_znum, config.mcube_znum,config.mcube_znum)
     pred_values = pred_values.cpu().detach().numpy()
     pred_values = pred_values/10.0
 
     # extract the iso-surface
-    if(not os.path.exists(output_dir + '/' + cat_id)):
-        os.makedirs(output_dir + '/' + cat_id)
-    ply_fname = output_dir + '/' + cat_id + '/' + shape_id + '.ply'
+    if not os.path.exists(f'{output_dir}/{cat_id}'):
+        os.makedirs(f'{output_dir}/{cat_id}')
+    ply_fname = f'{output_dir}/{cat_id}/{shape_id}.ply'
     utils.render_implicits(ply_fname, pred_values)
     #cv2.imwrite("image.png",(pred_disp+0.5)*128.0+100) 
 
@@ -61,22 +61,31 @@ def test_all(config):
     if(config.cuda):
         SDFmodel.cuda()
         CAMmodel.cuda()
-    
+
     testset = Dataset(config, 'test')
     test_iter = torch.utils.data.DataLoader(testset, batch_size=config.train_batch_size, shuffle=False)
-    
+
     epoch = 0
-    CAM_pretrain_fn = config.model_dir +'/' + config.model_folder_name + config.cam_model_name
-    SDF_pretrain_fn = config.model_dir+ '/' + config.model_folder_name + config.sdf_model_name
+    CAM_pretrain_fn = (
+        f'{config.model_dir}/{config.model_folder_name}{config.cam_model_name}'
+    )
+    SDF_pretrain_fn = (
+        f'{config.model_dir}/{config.model_folder_name}{config.sdf_model_name}'
+    )
 
     if(config.load_pretrain and os.path.exists(CAM_pretrain_fn) and os.path.exists(SDF_pretrain_fn)):
         _, CAMmodel, _, _ = utils.load_checkpoint(CAM_pretrain_fn, CAMmodel, None)
         epoch, SDFmodel, _, _ = utils.load_checkpoint(SDF_pretrain_fn, SDFmodel, None)
     else:
         print('pre-trained model doesnt exist!')
-    
-    
-    output_dir = config.output_dir+ '/' + config.model_folder_name + config.sdf_model_name.split('.')[0]+'_'+str(epoch+1)
+
+
+    output_dir = (
+        f'{config.output_dir}/{config.model_folder_name}'
+        + config.sdf_model_name.split('.')[0]
+        + '_'
+        + str(epoch + 1)
+    )
     if(not os.path.exists(output_dir)):
         os.makedirs(output_dir)
 
@@ -88,12 +97,12 @@ def test_all(config):
         if(config.cuda):
             gridworldcoords = gridworldcoords.cuda()
         index = 0
+        # select the view with most details            
+        cam_id = 33
+
         for data in testset.datalist:
             cat_id = data['cat_id']
             shape_id = data['shape_id']
-            # select the view with most details            
-            cam_id = 33
-         
             test_one_without_gttransmat(CAMmodel, SDFmodel, testset, gridworldcoords, cat_id, shape_id, cam_id, output_dir, config)  
 
 if __name__ == "__main__":

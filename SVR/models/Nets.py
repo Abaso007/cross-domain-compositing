@@ -105,5 +105,4 @@ class ResDecoder(nn.Module):
         p2 = self.up_conv3(self.upsample(p3)) + self.relu(self.c2_conv(feat1))
         p1 = self.up_conv2(self.upsample(p2)) + self.relu(self.c1_conv(feat0))
         p0 = self.relu(self.p0_conv(p1))
-        output_disp = self.pred_disp(p0)
-        return output_disp
+        return self.pred_disp(p0)
